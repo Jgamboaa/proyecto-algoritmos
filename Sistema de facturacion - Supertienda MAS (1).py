@@ -2,6 +2,8 @@ import csv
 import os
 import getpass
 from prettytable import PrettyTable
+from rich.live import Live
+from rich.table import Table
 
 os.system("cls")
 
@@ -22,15 +24,26 @@ class Empleado:
 empleados = []
 
 class Producto:
-    def __init__(self, nombre, precio, cantidad, proveedor):
+    def __init__(self, codigo,nombre, precio, cantidad, proveedor):
+        self.codigo = codigo
         self.nombre = nombre
         self.precio = precio
         self.cantidad = cantidad
         self.proveedor = proveedor
 
     def __str__(self):
-        return "{} {} {} {}".format(self.nombre, self.precio, self.cantidad, self.proveedor)
+        return "{} {} {} {}".format(self.codigo, self.nombre, self.precio, self.cantidad, self.proveedor)
 
+class proveedor:
+    def __init__(self, nombre, direccion, telefono, nit):
+        self.nombre = nombre
+        self.direccion = direccion
+        self.telefono = telefono
+        self.nit = nit
+
+    def __str__(self):
+        return "{} {} {} {}".format(self.nombre, self.direccion, self.telefono, self.nit)
+    
 productosBodega = []
 
 productosTienda = []
@@ -81,19 +94,19 @@ def cargar_productosBodega_desde_archivo():
             reader = csv.reader(file)
             next(reader)  # Saltar la primera fila (encabezados)
             for row in reader:
-                nombre, precio, cantidad, proveedor = row
-                producto = Producto(nombre, float(precio), int(cantidad), proveedor)
+                codigo, nombre, precio, cantidad, proveedor = row
+                producto = Producto(int(codigo),nombre, float(precio), int(cantidad), proveedor)
                 productosBodega.append(producto)
     except FileNotFoundError:
         # El archivo no existe, lo creamos vacío
         with open("productosBodega.csv", mode="w", newline="") as file:
             writer = csv.writer(file)
-            writer.writerow(["Nombre", "Precio", "Cantidad", "Proveedor"])
+            writer.writerow(["Codigo","Nombre", "Precio", "Cantidad", "Proveedor"])
 
 def guardar_productoBodega_en_archivo(producto):
     with open("productosBodega.csv", mode="a", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow([producto.nombre.upper(), producto.precio, producto.cantidad, producto.proveedor.upper()])
+        writer.writerow([producto.codigo, producto.nombre.upper(), producto.precio, producto.cantidad, producto.proveedor.upper()])
 
 def cargar_productosTienda_desde_archivo():
     try:
@@ -101,19 +114,19 @@ def cargar_productosTienda_desde_archivo():
             reader = csv.reader(file)
             next(reader)  # Saltar la primera fila (encabezados)
             for row in reader:
-                nombre, precio, cantidad, proveedor = row
-                producto = Producto(nombre, float(precio), int(cantidad), proveedor)
+                codigo, nombre, precio, cantidad, proveedor = row
+                producto = Producto(int(codigo),nombre, float(precio), int(cantidad), proveedor)
                 productosTienda.append(producto)
     except FileNotFoundError:
         # El archivo no existe, lo creamos vacío
         with open("productosTienda.csv", mode="w", newline="") as file:
             writer = csv.writer(file)
-            writer.writerow(["Nombre", "Precio", "Cantidad", "Proveedor"])
+            writer.writerow(["Codigo","Nombre", "Precio", "Cantidad", "Proveedor"])
 
 def guardar_productoTienda_en_archivo(producto):
     with open("productosTienda.csv", mode="a", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow([producto.nombre.upper(), producto.precio, producto.cantidad, producto.proveedor.upper()])
+        writer.writerow([producto.codigo, producto.nombre.upper(), producto.precio, producto.cantidad, producto.proveedor.upper()])
 
 def menu():
     os.system("cls")
@@ -154,7 +167,7 @@ def crear_empleado():
 def editar_empleado():
     os.system("cls")
     print("Editar Empleado")
-    nombre = input("Ingrese el nombre del empleado a editar: ")
+    nombre = input("Ingrese el nombre del empleado a editar: ").uppe
     for empleado in empleados:
         if empleado.nombre == nombre:
             nombre = input("Ingrese el nuevo nombre del empleado: ").upper()
@@ -259,6 +272,18 @@ def producto_existente(producto_nombre, lista_productos):
     for producto in lista_productos:
         if producto.nombre == producto_nombre:
             return True
+    return False
+
+def verificar_stock(codigo_producto, cantidad):
+    for producto in productosTienda:
+        if producto.nombre == codigo_producto:
+            if producto.cantidad >= cantidad:
+                producto.cantidad -= cantidad
+                return True
+            else:
+                print("No hay suficiente cantidad disponible en el stock.")
+                return False
+    print("El producto no está disponible.")
     return False
 
 def crear_producto():
@@ -411,7 +436,7 @@ def menu_productos():
     os.system("cls")
     print("1. Buscar Producto")
     print("2. Trasladar Producto a Bodega")
-    print("3. Editar Producto")
+    print("3. venta de Productos")
     print("4. Salir")
     opcion = int(input("Ingrese la opción: "))
     return opcion
@@ -501,35 +526,54 @@ def trasladar_productoBodega():
     input("Presione enter para continuar")
     return opcion
     
-def editar_productoTienda():
+def venta_productos():
     os.system("cls")
-    print("Editar Producto en Tienda")
-    nombre = input("Ingrese el nombre del producto a editar: ")
+    print("Venta de Productos")
+    nombre = input("Ingrese el nombre del producto a vender: ")
     for producto in productosTienda:
         if producto.nombre == nombre:
-            nuevo_nombre = input("Ingrese el nuevo nombre del producto: ").upper()
-            precio = float(input("Ingrese el nuevo precio del producto: "))
-            nueva_cantidad = int(input("Ingrese la nueva cantidad del producto: "))
-            proveedor = input("Ingrese el nuevo proveedor del producto: ").upper()
+            print("Producto encontrado en la tienda:")
+            print(producto)
+            cantidad = int(input("Ingrese la cantidad a vender: "))
+            if verificar_stock(nombre, cantidad):
+                
+                # Actualizar el archivo CSV de productos en la tienda
+                with open("productosTienda.csv", "w", newline="") as archivo:
+                    escritor_tienda = csv.writer(archivo)
+                    escritor_tienda.writerow(["Nombre", "Precio", "Cantidad", "Proveedor"])
+                    for producto_tienda in productosTienda:
+                        escritor_tienda.writerow([producto_tienda.nombre, producto_tienda.precio, producto_tienda.cantidad, producto_tienda.proveedor])
+                print("Desea agregar otro producto?")
+                print("1. Si")
+                print("2. No")
+                opcion = int(input("Ingrese la opción: "))
+                if opcion == 1:
+                    venta_productos()
+                elif opcion == 2:
+                # Actualizar el archivo CSV de facturas
+                    with open("facturas.csv", mode="a", newline="") as file:
+                        writer = csv.writer(file)
+                        writer.writerow([producto.nombre, producto.precio, cantidad, producto.proveedor])
+                    print("Venta realizada exitosamente")
+                    input("Presione enter para continuar")
+                #genera factura con pretty table
+                    os.system("cls")
+                    print("Factura")
+                    print("SUPER TIENDA MAS")
+                    print("Nombre: ", nombre)
+                    precio = producto.precio
+                    print("Precio: ", precio)
+                    print("Cantidad: ", cantidad)
+                    print("Proveedor: ", proveedor)
+                    print("Total: ", precio*cantidad)
+                    print("Gracias por su compra")
+                    input("Presione enter para continuar")
 
-            producto.nombre = nuevo_nombre
-            producto.precio = precio
-            producto.cantidad = nueva_cantidad
-            producto.proveedor = proveedor
-
-            # Actualizar el archivo CSV de productos en la tienda
-            with open("productosTienda.csv", "w", newline="") as archivo:
-                escritor = csv.writer(archivo)
-                escritor.writerow(["Nombre", "Precio", "Cantidad", "Proveedor"])
-                for producto_tienda in productosTienda:
-                    escritor.writerow([producto_tienda.nombre, producto_tienda.precio, producto_tienda.cantidad, producto_tienda.proveedor])
-
-            print("Producto editado en la tienda")
-            break
+                    break
     else:
         print("Producto no encontrado en la tienda")
-
     input("Presione enter para continuar")
+    return opcion
 
 def menu_clientes():
     os.system("cls")
@@ -767,7 +811,7 @@ def main():
                         elif opcion == 2:
                             trasladar_productoBodega()
                         elif opcion == 3:
-                            editar_productoTienda()
+                            venta_productos()
                         elif opcion == 4:
                             break
                         else:
@@ -789,7 +833,7 @@ def main():
                     while True:
                         opcion = menu_venta()
                         if opcion == 1:
-                            facturar()
+                            venta_productos()
                         elif opcion == 2:
                             anular_factura()
                         elif opcion == 3:
