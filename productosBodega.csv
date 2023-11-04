@@ -1,2 +1,3 @@
-Nombre,Precio,Cantidad,Proveedor
-SOPA,10.0,100,ISAI
+Codigo,Nombre,Precio,Cantidad,Proveedor
+1,VASO100,10.0,1000,ISAI
+2,VASO,10.0,1000,ISAI

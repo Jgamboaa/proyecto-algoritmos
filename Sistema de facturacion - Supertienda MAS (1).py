@@ -290,17 +290,16 @@ def crear_producto():
     os.system("cls")
     print("Crear Producto")
     nombre = input("Ingrese el nombre del producto: ").upper()
-
     # Verificar si el producto ya existe en la bodega o tienda
     if producto_existente(nombre, productosBodega) or producto_existente(nombre, productosTienda):
         print("El producto ya existe en la bodega o tienda.")
         input("Presione enter para continuar")
         return
-
     precio = float(input("Ingrese el precio del producto: "))
     cantidad = int(input("Ingrese la cantidad del producto: "))
     proveedor = input("Ingrese el proveedor del producto: ").upper()
-    producto = Producto(nombre, precio, cantidad, proveedor)
+    codigo = len(productosBodega) + 1  # Generar código automático sumando la cantidad de productos en la bodega
+    producto = Producto(codigo, nombre, precio, cantidad, proveedor)  # Agregar el código al producto
     productosBodega.append(producto)
     print("Producto creado")
     guardar_productoBodega_en_archivo(producto)
@@ -309,14 +308,15 @@ def crear_producto():
 def editar_productoBodega():
     os.system("cls")
     print("Editar Producto en Bodega")
-    nombre = input("Ingrese el nombre del producto a editar: ")
+    codigo = int(input("Ingrese el codigo del producto a editar: "))
     for producto in productosBodega:
-        if producto.nombre == nombre:
+        if producto.codigo == codigo:
             nuevo_nombre = input("Ingrese el nuevo nombre del producto: ").upper()
             precio = float(input("Ingrese el nuevo precio del producto: "))
             nueva_cantidad = int(input("Ingrese la nueva cantidad del producto: "))
             proveedor = input("Ingrese el nuevo proveedor del producto: ").upper()
 
+            producto.codigo = codigo
             producto.nombre = nuevo_nombre
             producto.precio = precio
             producto.cantidad = nueva_cantidad
@@ -325,9 +325,9 @@ def editar_productoBodega():
             # Actualizar el archivo CSV de productos en la bodega
             with open("productosBodega.csv", "w", newline="") as archivo:
                 escritor = csv.writer(archivo)
-                escritor.writerow(["Nombre", "Precio", "Cantidad", "Proveedor"])
+                escritor.writerow(["Codigo","Nombre", "Precio", "Cantidad", "Proveedor"])
                 for producto_bodega in productosBodega:
-                    escritor.writerow([producto_bodega.nombre, producto_bodega.precio, producto_bodega.cantidad, producto_bodega.proveedor])
+                    escritor.writerow([producto_bodega.codigo, producto_bodega.nombre, producto_bodega.precio, producto_bodega.cantidad, producto_bodega.proveedor])
 
             print("Producto editado en la bodega")
             break
